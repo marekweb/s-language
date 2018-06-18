@@ -1,0 +1,41 @@
+{
+  "name": "s-language",
+  "private": true,
+  "bin": {
+    "slang": "node build/command"
+  },
+  "main": "build/index.js",
+  "module": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "cli": "ts-node src/command",
+    "format": "prettier --single-quote --write '**/*.ts'",
+    "test": "jest",
+    "test-debug": "node --inspect-brk node_modules/.bin/jest --runInBand"
+  },
+  "devDependencies": {
+    "@types/node": "^10.3.2",
+    "jest": "^22.4.2",
+    "prettier": "^1.11.1",
+    "ts-jest": "^22.4.6",
+    "ts-node": "^6.1.0",
+    "typescript": "^2.9.1"
+  },
+  "dependencies": {
+    "@types/jest": "^23.0.0",
+    "chalk": "^2.4.1"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "js",
+      "json"
+    ],
+    "transform": {
+      "\\.ts$": "ts-jest"
+  },
+    "testMatch": [
+      "**/*.test.ts"
+    ]
+  }
+}
