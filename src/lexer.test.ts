@@ -2,6 +2,15 @@ import { Lexer } from './lexer';
 
 const samples: { input: string; output: Token[] }[] = [
   {
+    input: 'hello world\n',
+    output: [
+      { type: 'WordToken', value: 'hello', pos: 0 },
+      { type: 'WhitespaceToken', value: ' ', pos: 5 },
+      { type: 'WordToken', value: 'world', pos: 6 },
+      { type: 'NewLineToken', pos: 11 }
+    ]
+  },
+  {
     input: '(hello world)',
     output: [
       { type: 'OpenBracket', bracket: 'RoundBracket', pos: 0 },
@@ -46,15 +55,16 @@ const samples: { input: string; output: Token[] }[] = [
   {
     input: '\n(\tprint\n\t"foo\nbar"\n)\n',
     output: [
-      { type: 'WhitespaceToken', value: '\n', pos: 0 },
+      { type: 'NewLineToken', pos: 0 },
       { type: 'OpenBracket', bracket: 'RoundBracket', pos: 1 },
       { type: 'WhitespaceToken', value: '\t', pos: 2 },
       { type: 'WordToken', value: 'print', pos: 3 },
-      { type: 'WhitespaceToken', value: '\n\t', pos: 8 },
+      { type: 'NewLineToken', pos: 8 },
+      { type: 'WhitespaceToken', value: '\t', pos: 9 },
       { type: 'StringToken', value: 'foo\nbar', pos: 10 },
-      { type: 'WhitespaceToken', value: '\n', pos: 19 },
+      { type: 'NewLineToken', pos: 19 },
       { type: 'CloseBracket', bracket: 'RoundBracket', pos: 20 },
-      { type: 'WhitespaceToken', value: '\n', pos: 21 }
+      { type: 'NewLineToken', pos: 21 }
     ]
   },
   {
@@ -84,6 +94,14 @@ const samples: { input: string; output: Token[] }[] = [
 samples.forEach((sample, index) => {
   test(`sample ${index}`, () => {
     const lexer = new Lexer(sample.input);
+    const output = lexer.lex();
+    for (
+      let i = 0;
+      i < Math.max(sample.input.length, sample.output.length);
+      i++
+    ) {
+      expect(output[i]).toEqual(sample.output[i]);
+    }
     expect(lexer.lex()).toEqual(sample.output);
   });
 });

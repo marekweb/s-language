@@ -192,6 +192,9 @@ export class Lexer {
       case 46:
         return { type: 'AccessorToken', pos: this.pos };
 
+      case 10:
+        return { type: 'NewLineToken', pos: this.pos };
+
       default:
         return null;
     }

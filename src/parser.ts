@@ -1,9 +1,13 @@
 export class Parser {
   private pos: number = 0;
-  private tokens: Token[] = [];
+  private readonly tokens: Token[];
 
   constructor(tokens: Token[]) {
-    this.tokens = [
+    this.tokens = Parser.prepareTokensForParsing(tokens);
+  }
+
+  private static prepareTokensForParsing(tokens: Token[]): Token[] {
+    return [
       ...tokens.filter(token => token.type !== 'WhitespaceToken'),
       { type: 'EndToken' }
     ];
@@ -109,8 +113,12 @@ export class Parser {
         return node;
       }
 
-      const childNode = this.parseNode();
-      children.push(childNode);
+      const lineNode = this.parseLine();
+
+      // Keep the line only if it's non-blank.
+      if (lineNode.args.length) {
+        children.push(lineNode);
+      }
     }
   }
 
@@ -157,5 +165,33 @@ export class Parser {
       const childNode = this.parseNode();
       children.push(childNode);
     }
+  }
+
+  parseLine(): CallNode {
+    const children: ASTNode[] = [];
+    while (true) {
+      const token = this.getCurrentToken();
+      if (token.type === 'EndToken') {
+        break;
+      }
+
+      if (token.type === 'NewLineToken') {
+        this.pos++;
+        break;
+      }
+
+      const childNode = this.parseNode();
+      children.push(childNode);
+    }
+
+    if (children.length === 1) {
+      const firstChild = children[0];
+      if (firstChild.type === 'CallNode') {
+        console.log('UNWRAPPING');
+        return firstChild;
+      }
+    }
+
+    return { type: 'CallNode', args: children };
   }
 }

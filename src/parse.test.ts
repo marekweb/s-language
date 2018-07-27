@@ -2,7 +2,7 @@ import { parse } from '../src/parse';
 
 const samples: { input: string; output: ProgramNode }[] = [
   {
-    input: '(hello) (world)',
+    input: '(hello)\n(world)',
     output: {
       type: 'ProgramNode',
       children: [

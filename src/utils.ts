@@ -11,5 +11,5 @@ export function isAlpha(code: number): boolean {
 }
 
 export function isWhitespace(code: number): boolean {
-  return code === 32 || code === 10 || code === 13 || code === 9;
+  return code === 32 || code === 13 || code === 9;
 }

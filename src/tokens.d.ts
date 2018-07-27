@@ -6,6 +6,7 @@ type Token =
   | OpenToken
   | CloseToken
   | AccessorToken
+  | NewLineToken
   | EndToken;
 
 interface IToken {
@@ -49,4 +50,8 @@ interface AccessorToken extends IToken {
 
 interface EndToken extends IToken {
   type: 'EndToken';
+}
+
+interface NewLineToken extends IToken {
+  type: 'NewLineToken';
 }
