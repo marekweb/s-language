@@ -67,16 +67,21 @@ const samples: { input: string; output: ProgramNode }[] = [
       type: 'ProgramNode',
       children: [
         {
-          type: 'AccessorNode',
-          left: {
-            type: 'AccessorNode',
-            left: {
-              type: 'WordNode',
-              value: 'a'
-            },
-            right: { type: 'WordNode', value: 'b' }
-          },
-          right: { type: 'WordNode', value: 'c' }
+          type: 'CallNode',
+          args: [
+            {
+              type: 'AccessorNode',
+              left: {
+                type: 'AccessorNode',
+                left: {
+                  type: 'WordNode',
+                  value: 'a'
+                },
+                right: { type: 'WordNode', value: 'b' }
+              },
+              right: { type: 'WordNode', value: 'c' }
+            }
+          ]
         }
       ]
     }
@@ -87,21 +92,26 @@ const samples: { input: string; output: ProgramNode }[] = [
       type: 'ProgramNode',
       children: [
         {
-          type: 'AccessorNode',
-          left: {
-            type: 'CallNode',
-            args: [
-              {
-                type: 'AccessorNode',
-                left: {
-                  type: 'ListConstructorNode',
-                  children: [{ type: 'WordNode', value: 'a' }]
-                },
-                right: { type: 'WordNode', value: 'b' }
-              }
-            ]
-          },
-          right: { type: 'LiteralNumberNode', value: 5 }
+          type: 'CallNode',
+          args: [
+            {
+              type: 'AccessorNode',
+              left: {
+                type: 'CallNode',
+                args: [
+                  {
+                    type: 'AccessorNode',
+                    left: {
+                      type: 'ListConstructorNode',
+                      children: [{ type: 'WordNode', value: 'a' }]
+                    },
+                    right: { type: 'WordNode', value: 'b' }
+                  }
+                ]
+              },
+              right: { type: 'LiteralNumberNode', value: 5 }
+            }
+          ]
         }
       ]
     }

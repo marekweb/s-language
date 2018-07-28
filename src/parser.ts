@@ -167,7 +167,7 @@ export class Parser {
     }
   }
 
-  parseLine(): CallNode {
+  parseLine(insideFunctionBody: boolean = false): CallNode {
     const children: ASTNode[] = [];
     while (true) {
       const token = this.getCurrentToken();
@@ -180,6 +180,15 @@ export class Parser {
         break;
       }
 
+      if (
+        insideFunctionBody &&
+        token.type === 'CloseBracket' &&
+        token.bracket === 'RoundBracket'
+      ) {
+        this.pos++;
+        break;
+      }
+
       const childNode = this.parseNode();
       children.push(childNode);
     }
@@ -187,7 +196,6 @@ export class Parser {
     if (children.length === 1) {
       const firstChild = children[0];
       if (firstChild.type === 'CallNode') {
-        console.log('UNWRAPPING');
         return firstChild;
       }
     }

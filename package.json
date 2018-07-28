@@ -26,6 +26,7 @@
     "chalk": "^2.4.1"
   },
   "jest": {
+    "testEnvironment": "node",
     "moduleFileExtensions": [
       "ts",
       "js",
@@ -33,7 +34,7 @@
     ],
     "transform": {
       "\\.ts$": "ts-jest"
-  },
+    },
     "testMatch": [
       "**/*.test.ts"
     ]
