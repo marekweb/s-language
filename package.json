@@ -10,6 +10,7 @@
     "build": "tsc",
     "cli": "ts-node src/command",
     "format": "prettier --single-quote --write '**/*.ts'",
+    "lint": "tslint -p tsconfig.json",
     "test": "jest",
     "test-debug": "node --inspect-brk node_modules/.bin/jest --runInBand"
   },
@@ -19,7 +20,9 @@
     "prettier": "^1.11.1",
     "ts-jest": "^22.4.6",
     "ts-node": "^6.1.0",
-    "typescript": "^2.9.1"
+    "tslint": "^5.11.0",
+    "typescript": "^2.9.1",
+    "typestrict": "0.0.9"
   },
   "dependencies": {
     "@types/jest": "^23.0.0",
