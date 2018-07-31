@@ -14,7 +14,7 @@ interface IOutputWriter {
 type Val =
   | NumberValue
   | StringValue
-  // | FunctionValue
+  | FunctionValue
   | MapValue
   | ListValue
   | BooleanValue
@@ -49,4 +49,9 @@ type BooleanValue = {
 
 type EmptyValue = {
   type: 'EmptyValue';
+};
+
+type FunctionValue = {
+  type: 'FunctionValue';
+  node: FunctionBodyNode;
 };
