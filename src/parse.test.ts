@@ -115,6 +115,29 @@ const samples: { input: string; output: ProgramNode }[] = [
         }
       ]
     }
+  },
+  {
+    input: `print [1 2 3]
+`,
+    output: {
+      type: 'ProgramNode',
+      children: [
+        {
+          type: 'CallNode',
+          args: [
+            { type: 'WordNode', value: 'print' },
+            {
+              type: 'ListConstructorNode',
+              children: [
+                { type: 'LiteralNumberNode', value: 1 },
+                { type: 'LiteralNumberNode', value: 2 },
+                { type: 'LiteralNumberNode', value: 3 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   }
 ];
 

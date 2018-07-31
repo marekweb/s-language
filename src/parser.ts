@@ -99,6 +99,9 @@ export class Parser {
 
         break;
 
+      case 'NewLineToken':
+        throw new Error('Cannot have a line break here');
+
       default:
         throw new Error(`Unknown token ${token.type}`);
     }
