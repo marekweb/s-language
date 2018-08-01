@@ -364,7 +364,7 @@ export const standardLibrary: NativeCallableLibrary = {
 
   cat: {
     type: 'function',
-    async execute(interpreter: Interpreter, args: Val[]): Promise<Val> {
+    async execute(_: Interpreter, args: Val[]): Promise<Val> {
       const result = args.map(valueToString).join('');
       return { type: 'StringValue', value: result };
     }
@@ -383,7 +383,7 @@ export const standardLibrary: NativeCallableLibrary = {
   tojson: {
     type: 'function',
     args: ['*'],
-    async execute(interpreter: Interpreter, args: Val[]): Promise<Val> {
+    async execute(_: Interpreter, args: Val[]): Promise<Val> {
       if (args.length !== 1) {
         throw new Error('tojson: must have 1 argument');
       }
@@ -411,7 +411,7 @@ export const standardLibrary: NativeCallableLibrary = {
 
   equals: {
     type: 'function',
-    async execute(interpreter, args) {
+    async execute(_, args) {
       if (args.length === 0) {
         throw new Error('equals: must have at least 1 argument');
       }
@@ -452,7 +452,7 @@ export const mapLibrary: NativeCallableLibrary = {
   map: {
     type: 'function',
     args: [],
-    async execute(_, args) {
+    async execute() {
       return { type: 'MapValue', value: new Map<string, Val>() };
     }
   },
@@ -502,7 +502,7 @@ export const math: NativeCallableLibrary = {
   add: {
     type: 'function',
     args: ['NumberValue', 'NumberValue'],
-    async execute(interpreter: Interpreter, args: [NumberValue, NumberValue]) {
+    async execute(_, args: [NumberValue, NumberValue]) {
       return { type: 'NumberValue', value: args[0].value + args[1].value };
     }
   },
@@ -510,7 +510,7 @@ export const math: NativeCallableLibrary = {
   sub: {
     type: 'function',
     args: ['NumberValue', 'NumberValue'],
-    async execute(interpreter: Interpreter, args: [NumberValue, NumberValue]) {
+    async execute(_, args: [NumberValue, NumberValue]) {
       return { type: 'NumberValue', value: args[0].value - args[1].value };
     }
   },
@@ -518,7 +518,7 @@ export const math: NativeCallableLibrary = {
   mul: {
     type: 'function',
     args: ['NumberValue', 'NumberValue'],
-    async execute(interpreter: Interpreter, args: [NumberValue, NumberValue]) {
+    async execute(_, args: [NumberValue, NumberValue]) {
       return { type: 'NumberValue', value: args[0].value * args[1].value };
     }
   },
@@ -526,7 +526,7 @@ export const math: NativeCallableLibrary = {
   div: {
     type: 'function',
     args: ['NumberValue', 'NumberValue'],
-    async execute(interpreter: Interpreter, args: [NumberValue, NumberValue]) {
+    async execute(_, args: [NumberValue, NumberValue]) {
       return { type: 'NumberValue', value: args[0].value / args[1].value };
     }
   }
