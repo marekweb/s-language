@@ -165,8 +165,11 @@ export class Parser {
         return node;
       }
 
-      const childNode = this.parseNode();
-      children.push(childNode);
+      const lineNode = this.parseLine(true);
+      // Keep the line only if it's non-blank.
+      if (lineNode.args.length) {
+        children.push(lineNode);
+      }
     }
   }
 
@@ -186,9 +189,9 @@ export class Parser {
       if (
         insideFunctionBody &&
         token.type === 'CloseBracket' &&
-        token.bracket === 'RoundBracket'
+        token.bracket === 'CurlyBracket'
       ) {
-        this.pos++;
+        // this.pos++;
         break;
       }
 

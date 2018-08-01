@@ -1,6 +1,24 @@
 import chalk from 'chalk';
 import { wrap, toJson } from './interop';
 
+interface IBuiltinCallableDefinition {
+  type: string;
+  args?: (Val['type'] | '*')[];
+}
+
+interface IBuiltinFunction extends IBuiltinCallableDefinition {
+  type: 'function';
+  execute(interpreter: Interpreter, args: Val[]): Promise<Val>;
+}
+
+interface IBuiltinMacro extends IBuiltinCallableDefinition {
+  type: 'macro';
+  execute(interpreter: Interpreter, args: ASTNode[]): Promise<Val>;
+}
+
+type NativeCallable = IBuiltinFunction | IBuiltinMacro;
+type NativeCallableLibrary = { [key: string]: NativeCallable };
+
 const EMPTY_VALUE: EmptyValue = {
   type: 'EmptyValue'
 };
@@ -21,6 +39,7 @@ export class Interpreter implements IInterpreter {
   private tree: ASTNode;
   private globals = new Map<string, Val>();
   private callStack: StackFrame[] = [];
+  private nativeCallables = new Map<string, NativeCallable>();
 
   private outputWriter?: IOutputWriter = new ConsoleOutputWriter();
   constructor(tree: ASTNode, options: InterpreterOptions = {}) {
@@ -37,7 +56,7 @@ export class Interpreter implements IInterpreter {
     }
   }
 
-  debug(message: string) {
+  private debug(message: string) {
     if (this.isDebugEnabled) {
       console.log(`[${chalk.green('debug')}] ${message}`);
     }
@@ -52,11 +71,11 @@ export class Interpreter implements IInterpreter {
     return results;
   }
 
-  setGlobal(key: string, value: Val) {
+  private setGlobal(key: string, value: Val) {
     this.globals.set(key, value);
   }
 
-  getGlobal(key: string): Val {
+  private getGlobal(key: string): Val {
     const value = this.globals.get(key);
     if (!value) {
       return EMPTY_VALUE;
@@ -65,72 +84,8 @@ export class Interpreter implements IInterpreter {
     return value;
   }
 
-  async makeCall(word: string, args: ASTNode[] = []): Promise<Val> {
+  private async makeCall(word: string, args: ASTNode[] = []): Promise<Val> {
     switch (word) {
-      case 'add': {
-        if (args.length !== 2) {
-          throw new Error('add: must have 2 arguments');
-        }
-        const [firstArg, secondArg] = await this.evaluateAll(args);
-        if (firstArg.type !== 'NumberValue') {
-          throw new Error('add: first argument must be number');
-        }
-        if (secondArg.type !== 'NumberValue') {
-          throw new Error('add: second argument must be number');
-        }
-        return { type: 'NumberValue', value: firstArg.value + secondArg.value };
-      }
-
-      case 'sub': {
-        if (args.length !== 2) {
-          throw new Error('add: must have 2 arguments');
-        }
-        const [firstArg, secondArg] = await this.evaluateAll(args);
-        if (firstArg.type !== 'NumberValue') {
-          throw new Error('add: first argument must be number');
-        }
-        if (secondArg.type !== 'NumberValue') {
-          throw new Error('add: second argument must be number');
-        }
-        return { type: 'NumberValue', value: firstArg.value - secondArg.value };
-      }
-
-      case 'mul': {
-        const evaluatedArgs = await this.evaluateAll(args);
-        const result = evaluatedArgs.reduce((counter, val, index) => {
-          if (val.type !== 'NumberValue') {
-            throw new Error(
-              `mul: argument ${index} must be a number (got ${val.type})`
-            );
-          }
-          return counter * val.value;
-        }, 1);
-        return { type: 'NumberValue', value: result };
-      }
-
-      case 'flatten': {
-        if (args.length !== 1) {
-          throw new Error('flatten: expected 1 argument');
-        }
-        const evaluatedArg = await this.evaluateNode(args[0]);
-        if (evaluatedArg.type !== 'ListValue') {
-          throw new Error('flatten: argument must be a list');
-        }
-        return { type: 'ListValue', value: flatten(evaluatedArg) };
-      }
-
-      case 'join': {
-        if (args.length !== 1) {
-          throw new Error('join: expected 1 argument');
-        }
-        const evaluatedArg = await this.evaluateNode(args[0]);
-        if (evaluatedArg.type !== 'ListValue') {
-          throw new Error('join: argument must be a list');
-        }
-        const result = evaluatedArg.value.map(valueToString).join('');
-        return { type: 'StringValue', value: result };
-      }
-
       case 'set': {
         if (args.length !== 2) {
           throw new Error('set: must have 2 arguments');
@@ -158,92 +113,24 @@ export class Interpreter implements IInterpreter {
         return this.lookupName(key);
       }
 
-      case 'keys': {
-        if (args.length !== 1) {
-          throw new Error('keys: must have 1 argument');
-        }
-
-        const mapValue = await this.evaluateNode(args[0]);
-        if (mapValue.type !== 'MapValue') {
-          throw new Error('keys: argument must be a map');
-        }
-
-        const keys = Array.from(mapValue.value.keys()).map(wrap);
-
-        return { type: 'ListValue', value: keys };
-      }
-
-      case 'mapset': {
-        if (args.length !== 3) {
-          throw new Error('set: must have 3 arguments');
-        }
-
-        const mapValue = await this.evaluateNode(args[0]);
-
-        if (mapValue.type !== 'MapValue') {
-          throw new Error('set: argument 1 must be a map');
-        }
-
-        const key = await this.evaluateAsIdentifier(args[1]);
-        if (!key) {
-          throw new Error('set: argument 2 must be an identifier');
-        }
-
-        const valueToSet = await this.evaluateNode(args[2]);
-
-        mapValue.value.set(key, valueToSet);
-        return mapValue;
-      }
-
-      case 'mapget': {
-        if (args.length !== 2) {
-          throw new Error('get: must have 2 arguments');
-        }
-
-        const mapValue = await this.evaluateNode(args[0]);
-        if (mapValue.type !== 'MapValue') {
-          throw new Error('get: argument 1 must be a map');
-        }
-
-        const key = await this.evaluateAsIdentifier(args[1]);
-        if (!key) {
-          throw new Error('get: argument 2 must be an identifier');
-        }
-
-        const potentialValue = mapValue.value.get(key);
-        if (potentialValue === undefined) {
-          return EMPTY_VALUE;
-        }
-
-        return potentialValue;
-      }
-
-      case 'map': {
-        if (args.length !== 0) {
-          throw new Error('map: takes no arguments');
-        }
-
-        return { type: 'MapValue', value: new Map<string, Val>() };
-      }
-
       default:
-        const builtin = builtins.get(word);
-        if (!builtin) {
+        const callable = this.nativeCallables.get(word);
+        if (!callable) {
           throw new Error(`Cannot call unknown word: ${word}`);
         }
-        if (builtin.type === 'function') {
-          if (builtin.args) {
-            if (builtin.args.length !== args.length) {
+        if (callable.type === 'function') {
+          if (callable.args) {
+            if (callable.args.length !== args.length) {
               throw new Error(
                 `${word}: got ${args.length} arguments but expected ${
-                  builtin.args.length
+                  callable.args.length
                 }.`
               );
             }
           }
           const evaluatedArgs = await this.evaluateAll(args);
-          if (builtin.args) {
-            builtin.args.forEach((argType, i) => {
+          if (callable.args) {
+            callable.args.forEach((argType, i) => {
               if (argType !== '*' && argType !== evaluatedArgs[i].type) {
                 throw new Error(
                   `${word}: argument ${i + 1} is ${
@@ -253,15 +140,14 @@ export class Interpreter implements IInterpreter {
               }
             });
           }
-          return builtin.execute(this, evaluatedArgs);
+          return callable.execute(this, evaluatedArgs);
         } else {
-          return builtin.execute(this, args);
+          return callable.execute(this, args);
         }
     }
   }
 
-  lookupName(name: string): Val {
-    this.debug(`lookupName "${name}"`);
+  private lookupName(name: string): Val {
     for (let i = this.callStack.length - 1; i >= 0; i--) {
       const stackFrame = this.callStack[i];
       const foundValue = stackFrame.locals.get(name);
@@ -272,7 +158,7 @@ export class Interpreter implements IInterpreter {
     return this.getGlobal(name);
   }
 
-  async callUserFunction(func: FunctionValue, arg: Val) {
+  async callUserFunction(func: FunctionValue, arg: Val): Promise<Val> {
     const functionBodyNode = func.node;
     const callFrame = {
       func,
@@ -280,7 +166,8 @@ export class Interpreter implements IInterpreter {
     };
     this.callStack.push(callFrame);
     const result = await this.evaluateAll(functionBodyNode.children);
-    return result;
+    // Return the last value
+    return result[result.length - 1];
   }
 
   async evaluate() {
@@ -288,7 +175,7 @@ export class Interpreter implements IInterpreter {
       return this.evaluateNode(this.tree);
     } catch (e) {
       this.callStack.forEach(callFrame => {
-        console.error(chalk.red('frame'));
+        console.error(chalk.red('frame'), callFrame.func);
       });
       console.error(chalk.red(e));
     }
@@ -360,21 +247,24 @@ export class Interpreter implements IInterpreter {
 
     return null;
   }
-}
 
-function flatten(list: ListValue): Val[] {
-  const result: Val[] = [];
-  list.value.forEach(item => {
-    if (item.type === 'ListValue') {
-      result.push(...flatten(item));
-    } else {
-      result.push(item);
+  addNativeCallable(name: string, builtin: NativeCallable) {
+    this.debug(`adding native callable: ${name}`);
+    this.nativeCallables.set(name, builtin);
+  }
+
+  addNativeLibrary(library: NativeCallableLibrary) {
+    for (let key in library) {
+      this.addNativeCallable(key, library[key]);
     }
-  });
-  return result;
+  }
 }
 
 export function valueToString(value: Val): string {
+  if (value == undefined) {
+    return '<null>';
+  }
+
   switch (value.type) {
     case 'StringValue':
       return value.value;
@@ -397,69 +287,247 @@ export function valueToString(value: Val): string {
   }
 }
 
-interface IBuiltinCallableDefinition {
-  type: string;
-  args?: (Val['type'] | '*')[];
-}
-
-interface IBuiltinFunction extends IBuiltinCallableDefinition {
-  type: 'function';
-  execute(interpreter: Interpreter, args: Val[]): Promise<Val>;
-}
-
-interface IBUiltinMacro extends IBuiltinCallableDefinition {
-  type: 'macro';
-  execute(interpreter: Interpreter, args: ASTNode[]): Promise<Val>;
-}
-
-const builtins = new Map<string, IBuiltinFunction | IBUiltinMacro>();
-
-builtins.set('cat', {
-  type: 'function',
-  async execute(interpreter: Interpreter, args: Val[]): Promise<Val> {
-    const result = args.map(valueToString).join('');
-    return { type: 'StringValue', value: result };
-  }
-});
-
-builtins.set('print', {
-  type: 'macro',
-  async execute(interpreter: Interpreter, args: ASTNode[]): Promise<Val> {
-    const evaluatedArgs = await interpreter.evaluateAll(args);
-    const output = evaluatedArgs.map(valueToString).join(' ');
-    interpreter.writeOutput(output);
-    return EMPTY_VALUE;
-  }
-});
-
-builtins.set('tojson', {
-  type: 'function',
-  args: ['*'],
-  async execute(interpreter: Interpreter, args: Val[]): Promise<Val> {
-    if (args.length !== 1) {
-      throw new Error('tojson: must have 1 argument');
+function flatten(list: ListValue): Val[] {
+  const result: Val[] = [];
+  list.value.forEach(item => {
+    if (item.type === 'ListValue') {
+      result.push(...flatten(item));
+    } else {
+      result.push(item);
     }
-    const jsonString = toJson(args[0]);
-    return wrap(jsonString);
+  });
+  return result;
+}
+
+function toBoolean(value: Val): boolean {
+  switch (value.type) {
+    case 'EmptyValue':
+      return false;
+
+    case 'StringValue':
+      return !!value.value.length;
+
+    case 'NumberValue':
+      return !!value.value;
+
+    case 'BooleanValue':
+      return value.value;
+
+    default:
+      return true;
   }
-});
+}
 
-builtins.set('each', {
-  type: 'function',
-  args: ['ListValue', 'FunctionValue'],
-  async execute(
-    interpreter: Interpreter,
-    args: [ListValue, FunctionValue]
-  ): Promise<Val> {
-    const listValue = args[0];
-    const funcValue = args[1];
+function isEqual(a: Val, b: Val): boolean {
+  if (a.type === 'NumberValue' && b.type === 'NumberValue') {
+    return a.value === b.value;
+  } else if (a.type === 'StringValue' && b.type === 'StringValue') {
+    return a.value === b.value;
+  } else if (a.type === 'BooleanValue' && b.type === 'BooleanValue') {
+    return a.value === b.value;
+  } else if (a.type === 'EmptyValue' && b.type === 'EmptyValue') {
+    return true;
+  } else if (a.type === 'FunctionValue' && b.type === 'FunctionValue') {
+    return a.node === b.node;
+  }
 
-    const results: Val[] = [];
-    for (let i = 0; i < listValue.value.length; i++) {
-      const arg = listValue.value[i];
-      const result = await interpreter.callUserFunction(funcValue, arg);
-      results.push(result[results.length - 1]);
+  return a === b;
+}
+
+export const standardLibrary: NativeCallableLibrary = {
+  join: {
+    type: 'function',
+    args: ['ListValue'],
+    async execute(_, args: [ListValue]) {
+      const arg = args[0];
+      const result = arg.value.map(valueToString).join('');
+      return { type: 'StringValue', value: result };
     }
-    return { type: 'ListValue', value: results } as Val;
+  },
+  flatten: {
+    type: 'function',
+    args: ['ListValue'],
+    async execute(_, args: [ListValue]): Promise<Val> {
+      const listValue = args[0];
+      return { type: 'ListValue', value: flatten(listValue) };
+    }
+  },
+  keys: {
+    type: 'function',
+    args: ['MapValue'],
+    async execute(_, args: [MapValue]) {
+      const mapValue = args[0];
+      const keys = Array.from(mapValue.value.keys()).map(wrap);
+      return { type: 'ListValue', value: keys };
+    }
+  },
+
+  cat: {
+    type: 'function',
+    async execute(interpreter: Interpreter, args: Val[]): Promise<Val> {
+      const result = args.map(valueToString).join('');
+      return { type: 'StringValue', value: result };
+    }
+  },
+
+  print: {
+    type: 'macro',
+    async execute(interpreter: Interpreter, args: ASTNode[]): Promise<Val> {
+      const evaluatedArgs = await interpreter.evaluateAll(args);
+      const output = evaluatedArgs.map(valueToString).join(' ');
+      interpreter.writeOutput(output);
+      return EMPTY_VALUE;
+    }
+  },
+
+  tojson: {
+    type: 'function',
+    args: ['*'],
+    async execute(interpreter: Interpreter, args: Val[]): Promise<Val> {
+      if (args.length !== 1) {
+        throw new Error('tojson: must have 1 argument');
+      }
+      const jsonString = toJson(args[0]);
+      return wrap(jsonString);
+    }
+  },
+
+  each: {
+    type: 'function',
+    args: ['ListValue', 'FunctionValue'],
+    async execute(interpreter, args: [ListValue, FunctionValue]) {
+      const listValue = args[0];
+      const funcValue = args[1];
+
+      const results: Val[] = [];
+      for (let i = 0; i < listValue.value.length; i++) {
+        const arg = listValue.value[i];
+        const result = await interpreter.callUserFunction(funcValue, arg);
+        results.push(result);
+      }
+      return { type: 'ListValue', value: results };
+    }
+  },
+
+  equals: {
+    type: 'function',
+    async execute(interpreter, args) {
+      if (args.length === 0) {
+        throw new Error('equals: must have at least 1 argument');
+      }
+      const referenceArg = args[0];
+      const result = args.slice(1).every(arg => isEqual(referenceArg, arg));
+      return { type: 'BooleanValue', value: result };
+    }
+  },
+
+  if: {
+    type: 'macro',
+    async execute(interpreter, args) {
+      if (args.length < 2 || args.length > 3) {
+        throw new Error('if: must have 2 or 3 arguments');
+      }
+      const conditionValue = await interpreter.evaluateNode(args[0]);
+
+      if (toBoolean(conditionValue)) {
+        const func = await interpreter.evaluateNode(args[1]);
+        if (func.type !== 'FunctionValue') {
+          throw new Error('if: argument 2 must be a function');
+        }
+        // TODO: for some reason `callUserFunction` requires a value argument
+        return interpreter.callUserFunction(func, EMPTY_VALUE);
+      } else if (args.length === 3) {
+        const func = await interpreter.evaluateNode(args[2]);
+        if (func.type !== 'FunctionValue') {
+          throw new Error('if: argument 2 must be a function');
+        }
+        return interpreter.callUserFunction(func, EMPTY_VALUE);
+      }
+      return EMPTY_VALUE;
+    }
   }
-});
+};
+
+export const mapLibrary: NativeCallableLibrary = {
+  map: {
+    type: 'function',
+    args: [],
+    async execute(_, args) {
+      return { type: 'MapValue', value: new Map<string, Val>() };
+    }
+  },
+
+  mapset: {
+    type: 'macro',
+    async execute(interpreter, args) {
+      const mapValue = await interpreter.evaluateNode(args[0]);
+      if (mapValue.type !== 'MapValue') {
+        throw new Error('mapset: argument 1 must be a map');
+      }
+
+      const key = await interpreter.evaluateAsIdentifier(args[1]);
+      if (!key) {
+        throw new Error('mapset: argument 2 must be an identifier');
+      }
+
+      const valueToSet = await interpreter.evaluateNode(args[2]);
+
+      mapValue.value.set(key, valueToSet);
+      return mapValue;
+    }
+  },
+  mapget: {
+    type: 'macro',
+    async execute(interpreter, args) {
+      const mapValue = await interpreter.evaluateNode(args[0]);
+      if (mapValue.type !== 'MapValue') {
+        throw new Error('mapget: argument 1 must be a map');
+      }
+      const key = await interpreter.evaluateAsIdentifier(args[1]);
+      if (!key) {
+        throw new Error('mapget: argument 2 must be an identifier');
+      }
+
+      const value = mapValue.value.get(key);
+      if (!value) {
+        return EMPTY_VALUE;
+      }
+
+      return value;
+    }
+  }
+};
+
+export const math: NativeCallableLibrary = {
+  add: {
+    type: 'function',
+    args: ['NumberValue', 'NumberValue'],
+    async execute(interpreter: Interpreter, args: [NumberValue, NumberValue]) {
+      return { type: 'NumberValue', value: args[0].value + args[1].value };
+    }
+  },
+
+  sub: {
+    type: 'function',
+    args: ['NumberValue', 'NumberValue'],
+    async execute(interpreter: Interpreter, args: [NumberValue, NumberValue]) {
+      return { type: 'NumberValue', value: args[0].value - args[1].value };
+    }
+  },
+
+  mul: {
+    type: 'function',
+    args: ['NumberValue', 'NumberValue'],
+    async execute(interpreter: Interpreter, args: [NumberValue, NumberValue]) {
+      return { type: 'NumberValue', value: args[0].value * args[1].value };
+    }
+  },
+
+  div: {
+    type: 'function',
+    args: ['NumberValue', 'NumberValue'],
+    async execute(interpreter: Interpreter, args: [NumberValue, NumberValue]) {
+      return { type: 'NumberValue', value: args[0].value / args[1].value };
+    }
+  }
+};

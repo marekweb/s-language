@@ -1,4 +1,4 @@
-import { Interpreter } from './interpreter';
+import { Interpreter, mapLibrary, standardLibrary } from './interpreter';
 import { parse } from './parse';
 
 class LoggingOutputWriter implements IOutputWriter {
@@ -59,6 +59,8 @@ samples.forEach((sample, index) => {
     const tree = parse(sample.input);
     const outputWriter = new LoggingOutputWriter();
     const interpreter = new Interpreter(tree, { outputWriter });
+    interpreter.addNativeLibrary(mapLibrary);
+    interpreter.addNativeLibrary(standardLibrary);
     await interpreter.evaluate();
     expect(outputWriter.getMessages()).toEqual(sample.output);
   });

@@ -1,4 +1,9 @@
-import { isAlpha, isAlphaNumeric, isNumeric, isWhitespace } from './utils';
+import {
+  isAlpha,
+  isAlphaNumeric,
+  isNumeric,
+  isWhitespace
+} from './lexer-utils';
 
 enum LexerState {
   Empty,

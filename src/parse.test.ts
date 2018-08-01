@@ -1,4 +1,4 @@
-import { parse } from '../src/parse';
+import { parse } from './parse';
 
 const samples: { input: string; output: ProgramNode }[] = [
   {
@@ -45,8 +45,13 @@ const samples: { input: string; output: ProgramNode }[] = [
                 {
                   type: 'FunctionBodyNode',
                   children: [
-                    { type: 'LiteralNumberNode', value: 2 },
-                    { type: 'LiteralNumberNode', value: 3 }
+                    {
+                      type: 'CallNode',
+                      args: [
+                        { type: 'LiteralNumberNode', value: 2 },
+                        { type: 'LiteralNumberNode', value: 3 }
+                      ]
+                    }
                   ]
                 },
                 { type: 'LiteralNumberNode', value: 4 }
