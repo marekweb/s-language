@@ -9,24 +9,25 @@
   "scripts": {
     "build": "tsc",
     "cli": "ts-node src/command",
+    "cli-debug": "node --inspect-brk build/command",
     "format": "prettier --single-quote --write '**/*.ts'",
     "lint": "tslint -p tsconfig.json",
     "test": "jest",
     "test-debug": "node --inspect-brk node_modules/.bin/jest --runInBand"
   },
   "devDependencies": {
-    "@types/node": "^10.3.2",
-    "jest": "^22.4.2",
-    "prettier": "^1.11.1",
-    "ts-jest": "^22.4.6",
-    "ts-node": "^6.1.0",
-    "tslint": "^5.11.0",
-    "typescript": "^2.9.1",
-    "typestrict": "0.0.9"
+    "@types/node": "^12.7.0",
+    "jest": "^24.8.0",
+    "prettier": "^1.18.2",
+    "ts-jest": "^24.0.2",
+    "ts-node": "^8.3.0",
+    "tslint": "^5.18.0",
+    "typescript": "^3.5.3",
+    "typestrict": "1.0.2"
   },
   "dependencies": {
-    "@types/jest": "^23.0.0",
-    "chalk": "^2.4.1"
+    "@types/jest": "^24.0.17",
+    "chalk": "^2.4.2"
   },
   "jest": {
     "testEnvironment": "node",
