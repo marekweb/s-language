@@ -1,3 +1,5 @@
+import { Val, EmptyValue } from './values';
+
 type PlainObject =
   | number
   | string

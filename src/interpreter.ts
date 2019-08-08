@@ -1,5 +1,27 @@
 import chalk from 'chalk';
 import { wrap, toJson } from './interop';
+import {
+  Val,
+  FunctionValue,
+  ListValue,
+  MapValue,
+  EmptyValue,
+  NumberValue
+} from './values';
+import { ASTNode } from './nodes';
+
+export interface IOutputWriter {
+  write(output: string): void;
+}
+
+export type InterpreterOptions = {
+  debug?: boolean;
+  outputWriter?: IOutputWriter;
+};
+
+interface IInterpreter {
+  evaluate(): Promise<Val>;
+}
 
 interface IBuiltinCallableDefinition {
   type: string;
@@ -116,15 +138,17 @@ export class Interpreter implements IInterpreter {
       default:
         const callable = this.nativeCallables.get(word);
         if (!callable) {
+          console.log(
+            'Here are the native callables:',
+            Array.from(this.nativeCallables.keys()).join(' ')
+          );
           throw new Error(`Cannot call unknown word: ${word}`);
         }
         if (callable.type === 'function') {
           if (callable.args) {
             if (callable.args.length !== args.length) {
               throw new Error(
-                `${word}: got ${args.length} arguments but expected ${
-                  callable.args.length
-                }.`
+                `${word}: got ${args.length} arguments but expected ${callable.args.length}.`
               );
             }
           }
@@ -528,6 +552,14 @@ export const math: NativeCallableLibrary = {
     args: ['NumberValue', 'NumberValue'],
     async execute(_, args: [NumberValue, NumberValue]) {
       return { type: 'NumberValue', value: args[0].value / args[1].value };
+    }
+  },
+
+  double: {
+    type: 'function',
+    args: ['NumberValue'],
+    async execute(_, args: [NumberValue]) {
+      return { type: 'NumberValue', value: args[0].value * 2 };
     }
   }
 };

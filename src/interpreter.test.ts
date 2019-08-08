@@ -1,4 +1,9 @@
-import { Interpreter, mapLibrary, standardLibrary } from './interpreter';
+import {
+  Interpreter,
+  IOutputWriter,
+  mapLibrary,
+  standardLibrary
+} from './interpreter';
 import { parse } from './parse';
 
 class LoggingOutputWriter implements IOutputWriter {

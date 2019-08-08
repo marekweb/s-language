@@ -1,4 +1,5 @@
 import { parse } from './parse';
+import { ProgramNode } from './nodes';
 
 const samples: { input: string; output: ProgramNode }[] = [
   {

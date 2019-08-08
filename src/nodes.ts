@@ -1,4 +1,4 @@
-type ASTNode =
+export type ASTNode =
   | ProgramNode
   | CallNode
   | ListConstructorNode
@@ -8,46 +8,46 @@ type ASTNode =
   | WordNode
   | AccessorNode;
 
-interface IMyNode {
+export interface IMyNode {
   type: string;
 }
 
-interface ProgramNode extends IMyNode {
+export interface ProgramNode extends IMyNode {
   type: 'ProgramNode';
   children: ASTNode[];
 }
 
-interface CallNode extends IMyNode {
+export interface CallNode extends IMyNode {
   type: 'CallNode';
   args: ASTNode[];
 }
 
-interface ListConstructorNode extends IMyNode {
+export interface ListConstructorNode extends IMyNode {
   type: 'ListConstructorNode';
   children: ASTNode[];
 }
 
-interface FunctionBodyNode extends IMyNode {
+export interface FunctionBodyNode extends IMyNode {
   type: 'FunctionBodyNode';
   children: ASTNode[];
 }
 
-interface LiteralStringNode extends IMyNode {
+export interface LiteralStringNode extends IMyNode {
   type: 'LiteralStringNode';
   value: string;
 }
 
-interface LiteralNumberNode extends IMyNode {
+export interface LiteralNumberNode extends IMyNode {
   type: 'LiteralNumberNode';
   value: number;
 }
 
-interface WordNode extends IMyNode {
+export interface WordNode extends IMyNode {
   type: 'WordNode';
   value: string;
 }
 
-interface AccessorNode extends IMyNode {
+export interface AccessorNode extends IMyNode {
   type: 'AccessorNode';
   left: ASTNode;
   right: ASTNode;

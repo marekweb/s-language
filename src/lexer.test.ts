@@ -1,4 +1,5 @@
 import { Lexer } from './lexer';
+import { Token } from './tokens';
 
 const samples: { input: string; output: Token[] }[] = [
   {

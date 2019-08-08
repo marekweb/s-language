@@ -1,6 +1,12 @@
-///<reference path="./values.d.ts"/>
+import {
+  InterpreterOptions,
+  Interpreter,
+  math,
+  standardLibrary,
+  mapLibrary
+} from './interpreter';
+import { Val } from './values';
 
-import { Interpreter, math, standardLibrary, mapLibrary } from './interpreter';
 import { parse } from './parse';
 
 export function evaluate(

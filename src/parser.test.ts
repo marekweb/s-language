@@ -1,4 +1,6 @@
 import { Parser } from './parser';
+import { ProgramNode } from './nodes';
+import { Token } from './tokens';
 
 const samples: { input: Token[]; output: ProgramNode }[] = [
   {

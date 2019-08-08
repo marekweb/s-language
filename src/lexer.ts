@@ -4,6 +4,7 @@ import {
   isNumeric,
   isWhitespace
 } from './lexer-utils';
+import { Token } from './tokens';
 
 enum LexerState {
   Empty,

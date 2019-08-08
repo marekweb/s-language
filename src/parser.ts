@@ -1,3 +1,12 @@
+import { Token } from './tokens';
+import {
+  ASTNode,
+  ProgramNode,
+  CallNode,
+  ListConstructorNode,
+  FunctionBodyNode
+} from './nodes';
+
 export class Parser {
   private pos: number = 0;
   private readonly tokens: Token[];
@@ -103,7 +112,26 @@ export class Parser {
         throw new Error('Cannot have a line break here');
 
       default:
-        throw new Error(`Unknown token ${token.type}`);
+        throw new Error(
+          `Unknown token ${token.type} at ${token.pos} (token index ${this.pos})`
+        );
+    }
+  }
+
+  static getLineWithPos(input: string, searchPos: number) {
+    if (searchPos > input.length) {
+      throw new Error('getLineWithPos: out of range');
+    }
+    let lineStart = 0;
+    let lineEnd = 0;
+    while (true) {
+      lineEnd = input.indexOf('\n');
+      if (lineEnd === -1) {
+        lineEnd = input.length;
+      }
+      if (searchPos < lineEnd) {
+        return input.slice(lineStart, lineEnd);
+      }
     }
   }
 

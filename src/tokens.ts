@@ -1,4 +1,4 @@
-type Token =
+export type Token =
   | StringToken
   | NumberToken
   | WordToken
@@ -14,44 +14,44 @@ interface IToken {
   readonly pos?: number;
 }
 
-interface WordToken extends IToken {
+export interface WordToken extends IToken {
   type: 'WordToken';
   value: string;
 }
 
-interface StringToken extends IToken {
+export interface StringToken extends IToken {
   type: 'StringToken';
   value: string;
 }
 
-interface OpenToken extends IToken {
+export interface OpenToken extends IToken {
   type: 'OpenBracket';
   bracket: BracketType;
 }
 
-interface CloseToken extends IToken {
+export interface CloseToken extends IToken {
   type: 'CloseBracket';
   bracket: BracketType;
 }
 
-interface NumberToken extends IToken {
+export interface NumberToken extends IToken {
   type: 'NumberToken';
   value: number;
 }
 
-interface WhitespaceToken extends IToken {
+export interface WhitespaceToken extends IToken {
   type: 'WhitespaceToken';
   value: string;
 }
 
-interface AccessorToken extends IToken {
+export interface AccessorToken extends IToken {
   type: 'AccessorToken';
 }
 
-interface EndToken extends IToken {
+export interface EndToken extends IToken {
   type: 'EndToken';
 }
 
-interface NewLineToken extends IToken {
+export interface NewLineToken extends IToken {
   type: 'NewLineToken';
 }
